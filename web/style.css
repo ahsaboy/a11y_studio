@@ -203,7 +203,8 @@ h1, h2 { margin: 0; font-weight: 600; }
   font-size: 12px;
   font-family: var(--font-mono);
   cursor: pointer;
-  transition: border-color var(--t-fast) var(--ease);
+  transition: border-color var(--t-fast) var(--ease),
+              box-shadow var(--t-fast) var(--ease);
   line-height: 1;
   white-space: nowrap;
   width: 100%;
@@ -215,6 +216,7 @@ h1, h2 { margin: 0; font-weight: 600; }
 .dropdown-trigger:focus-visible {
   border-color: var(--c-refresh);
   outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, .18);
 }
 .dropdown-trigger .dropdown-label {
   flex: 1;
@@ -236,7 +238,6 @@ h1, h2 { margin: 0; font-weight: 600; }
 /* 下拉菜单 */
 .dropdown-menu {
   position: absolute;
-  top: calc(100% + 4px);
   left: 0;
   right: 0;
   min-width: 100%;
@@ -250,9 +251,25 @@ h1, h2 { margin: 0; font-weight: 600; }
   padding: 4px;
   opacity: 0;
   visibility: hidden;
-  transform: translateY(-4px);
-  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
   z-index: calc(var(--z-toolbar) + 10);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+}
+/* 默认下弹 */
+.dropdown.menu-down .dropdown-menu {
+  top: calc(100% + 4px);
+  transform: translateY(-4px);
+}
+.dropdown.menu-down .dropdown-menu.open {
+  transform: translateY(0);
+}
+/* 上弹模式 */
+.dropdown.menu-up .dropdown-menu {
+  bottom: calc(100% + 4px);
+  top: auto;
+  transform: translateY(4px);
+}
+.dropdown.menu-up .dropdown-menu.open {
+  transform: translateY(0);
 }
 .dropdown-menu.open {
   opacity: 1;
@@ -278,6 +295,10 @@ h1, h2 { margin: 0; font-weight: 600; }
 }
 .dropdown-item:hover {
   background: var(--bg-elev-3);
+}
+.dropdown-item.highlighted {
+  background: var(--bg-elev-3);
+  color: var(--c-refresh);
 }
 .dropdown-item.active {
   color: var(--c-refresh);

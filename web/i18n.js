@@ -193,15 +193,22 @@
     var wrapper = document.createElement('div');
     wrapper.className = 'dropdown';
     var selected = current;
+    var highlightedIndex = -1;
+    var isOpen = false;
+    var menuPlacement = 'down';
 
     /* 触发按钮 */
     var trigger = document.createElement('button');
     trigger.className = 'dropdown-trigger';
     trigger.type = 'button';
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
 
     /* 菜单 */
     var menu = document.createElement('div');
     menu.className = 'dropdown-menu';
+    menu.setAttribute('role', 'listbox');
+    menu.setAttribute('aria-label', '下拉菜单');
 
     function findLabel(val) {
       for (var i = 0; i < opts.length; i++) {
@@ -210,14 +217,42 @@
       return val;
     }
 
+    function getSelectableIndex(fromIndex, direction) {
+      var step = direction > 0 ? 1 : -1;
+      var idx = fromIndex + step;
+      while (idx >= 0 && idx < opts.length) {
+        if (!opts[idx].disabled) return idx;
+        idx += step;
+      }
+      return -1;
+    }
+
+    function setHighlighted(idx) {
+      highlightedIndex = idx;
+      var items = menu.querySelectorAll('.dropdown-item');
+      items.forEach(function (item, i) {
+        if (i === idx) {
+          item.classList.add('highlighted');
+          item.setAttribute('aria-selected', 'true');
+          item.scrollIntoView({ block: 'nearest' });
+        } else {
+          item.classList.remove('highlighted');
+          item.setAttribute('aria-selected', 'false');
+        }
+      });
+    }
+
     function buildMenu() {
       menu.innerHTML = '';
-      opts.forEach(function (opt) {
+      opts.forEach(function (opt, index) {
         var item = document.createElement('button');
         item.className = 'dropdown-item' + (opt.value === selected ? ' active' : '');
         if (opt.disabled) item.disabled = true;
         item.type = 'button';
         item.dataset.value = opt.value;
+        item.setAttribute('role', 'option');
+        item.setAttribute('aria-selected', opt.value === selected ? 'true' : 'false');
+        item.setAttribute('data-index', index);
         item.textContent = opt.label;
         if (opt.value === selected) {
           var ck = document.createElement('span');
@@ -230,13 +265,34 @@
           if (opt.disabled) return;
           if (opt.value !== selected) {
             selected = opt.value;
+            highlightedIndex = -1;
             render();
             if (onChange) onChange(selected);
           }
           closeAll();
         });
+        item.addEventListener('mouseenter', function () {
+          setHighlighted(index);
+        });
         menu.appendChild(item);
       });
+    }
+
+    function updateMenuPlacement() {
+      if (!isOpen) return;
+      var triggerRect = trigger.getBoundingClientRect();
+      var menuHeight = menu.offsetHeight;
+      var spaceBelow = window.innerHeight - triggerRect.bottom - 4;
+      var spaceAbove = triggerRect.top - 4;
+      if (spaceBelow < menuHeight && spaceAbove > menuHeight) {
+        menuPlacement = 'up';
+        wrapper.classList.add('menu-up');
+        wrapper.classList.remove('menu-down');
+      } else {
+        menuPlacement = 'down';
+        wrapper.classList.remove('menu-up');
+        wrapper.classList.add('menu-down');
+      }
     }
 
     function render() {
@@ -248,17 +304,82 @@
     trigger.addEventListener('click', function (e) {
       e.stopPropagation();
       var wasOpen = wrapper.classList.contains('open');
-      /* 先关闭所有其他下拉框 */
       document.querySelectorAll('.dropdown.open').forEach(function (el) {
         if (el !== wrapper) el.classList.remove('open');
       });
-      /* toggle 自身 */
       if (wasOpen) {
         wrapper.classList.remove('open');
         menu.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+        isOpen = false;
+        highlightedIndex = -1;
       } else {
         wrapper.classList.add('open');
         menu.classList.add('open');
+        trigger.setAttribute('aria-expanded', 'true');
+        isOpen = true;
+        var selectedIdx = -1;
+        for (var i = 0; i < opts.length; i++) {
+          if (opts[i].value === selected) {
+            selectedIdx = i;
+            break;
+          }
+        }
+        if (selectedIdx >= 0) {
+          setHighlighted(selectedIdx);
+        } else {
+          var firstSelectableIdx = getSelectableIndex(-1, 1);
+          if (firstSelectableIdx >= 0) setHighlighted(firstSelectableIdx);
+        }
+        setTimeout(updateMenuPlacement, 0);
+      }
+    });
+
+    trigger.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (!isOpen) {
+          trigger.click();
+        } else {
+          var nextIdx = getSelectableIndex(highlightedIndex, 1);
+          if (nextIdx >= 0) setHighlighted(nextIdx);
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!isOpen) {
+          trigger.click();
+        } else {
+          var prevIdx = getSelectableIndex(highlightedIndex, -1);
+          if (prevIdx >= 0) setHighlighted(prevIdx);
+        }
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (!isOpen) {
+          trigger.click();
+        } else if (highlightedIndex >= 0 && !opts[highlightedIndex].disabled) {
+          var opt = opts[highlightedIndex];
+          if (opt.value !== selected) {
+            selected = opt.value;
+            render();
+            if (onChange) onChange(selected);
+          }
+          closeAll();
+        }
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        if (isOpen) closeAll();
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        if (isOpen) {
+          var firstIdx = getSelectableIndex(-1, 1);
+          if (firstIdx >= 0) setHighlighted(firstIdx);
+        }
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        if (isOpen) {
+          var lastIdx = getSelectableIndex(opts.length, -1);
+          if (lastIdx >= 0) setHighlighted(lastIdx);
+        }
       }
     });
 
