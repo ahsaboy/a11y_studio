@@ -398,7 +398,6 @@ button.secondary {
 }
 button.secondary:hover { background: var(--line-strong); }
 button:not(.btn):not(.secondary):not(.icon-btn) {
-  background: var(--c-refresh);
   color: #fff;
   border: 1px solid transparent;
   padding: 6px 12px;
