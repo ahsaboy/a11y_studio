@@ -1,6 +1,6 @@
 /**
  * i18n.js — A11y Studio 语言切换模块
- * 提供 t() 翻译函数、setLang() 切换逻辑，以及语言选择器初始化
+ * 提供 t() 翻译函数、setLang() 切换逻辑，以及自定义语言选择器
  */
 (function () {
   'use strict';
@@ -45,6 +45,7 @@
       'panel.form':                '参数',
       'panel.form.hint':           '先选一个动作',
       'panel.steps':               '步骤时间线',
+      'panel.steps.aria':          '步骤列表',
       'panel.code':                '代码编辑器',
       'panel.code.badge':          '可编辑',
       'panel.code.reset':          '重新生成',
@@ -99,7 +100,10 @@
 
       /* CSS 伪元素 */
       'css.stepsEmpty':            '尚未添加任何步骤 — 在上方选择动作并点击「添加到时间线」',
-      'css.execEmpty':             '未执行'
+      'css.execEmpty':             '未执行',
+
+      /* 语言选择器 */
+      'lang.label':                '语言'
     },
 
     en: {
@@ -110,7 +114,7 @@
       'btn.refresh':               'Refresh',
       'btn.refresh.title':         'Re-fetch screenshot and node tree',
       'btn.skip':                  'Skip Screenshot',
-      'btn.skip.title':            'When checked, refresh only pulls node tree without screenshot (useful for slow transfer or when visuals aren’t needed)',
+      'btn.skip.title':            'When checked, refresh only pulls node tree without screenshot (useful for slow transfer or when visuals aren\'t needed)',
       'btn.align.left':            'L',
       'btn.align.center':          'C',
       'btn.align.right':           'R',
@@ -140,6 +144,7 @@
       'panel.form':                'Parameters',
       'panel.form.hint':           'Select an action first',
       'panel.steps':               'Step Timeline',
+      'panel.steps.aria':          'Steps list',
       'panel.code':                'Code Editor',
       'panel.code.badge':          'Editable',
       'panel.code.reset':          'Regenerate',
@@ -161,7 +166,7 @@
       'fnFilter.placeholder':      'Search click / setText / scrollTo ...',
       'fnFilter.aria':             'Search functions',
       'codeEditor.aria':           'Editable script code',
-      'codeEditor.placeholder':    '// No steps yet\n// Click a node on the left → choose an action → add to timeline\n// Or type BeanShell Java code directly and click 「Run Script」',
+      'codeEditor.placeholder':    '// No steps yet\n// Click a node on the left → choose an action → add to timeline\n// Or type BeanShell Java code directly and click "Run Script"',
 
       /* dynamic messages */
       'msg.fetching':              'Fetching...',
@@ -193,10 +198,19 @@
       'hover.candidate':           'Candidate {i}/{total} · scroll to change layer',
 
       /* CSS pseudo-elements */
-      'css.stepsEmpty':            'No steps yet — select an action above and click “Add to Timeline”',
-      'css.execEmpty':             'Not executed'
+      'css.stepsEmpty':            'No steps yet — select an action above and click "Add to Timeline"',
+      'css.execEmpty':             'Not executed',
+
+      /* lang switcher */
+      'lang.label':                'Language'
     }
   };
+
+  /* 语言选项配置 */
+  var LANG_OPTIONS = [
+    { code: 'zh', flag: '中文', label: '中文' },
+    { code: 'en', flag: 'EN',          label: 'English' }
+  ];
 
   /* ===== 核心 API ===== */
   window.I18N_CURRENT = 'zh';
@@ -206,10 +220,6 @@
     return (dict && dict[key]) || key;
   };
 
-  /**
-   * 格式化翻译字符串，支持 {0}, {1}, ... 或 {name} 占位符
-   * 例: fmt('msg.fetch.ok', { n: 5, w: 1080, h: 1920, tag: '' })
-   */
   window.fmt = function (key, vars) {
     var s = t(key);
     if (vars) {
@@ -260,44 +270,124 @@
     /* 持久化 */
     localStorage.setItem('a11y-lang', lang);
 
-    /* 更新选择器 */
-    var sel = document.getElementById('langSelect');
-    if (sel) sel.value = lang;
+    /* 更新自定义选择器状态 */
+    updateSwitcherUI(lang);
 
     /* 通知 app.js 等模块重新渲染动态内容 */
     document.dispatchEvent(new Event('langchange'));
   };
 
-  /* ===== 初始化 ===== */
-  var saved = localStorage.getItem('a11y-lang') || 'zh';
-  window.I18N_CURRENT = saved;
+  /* ===== 自定义下拉菜单 ===== */
+  var switcherEl = null;
+  var menuEl = null;
 
-  /* DOM 就绪后应用翻译并插入语言选择器 */
-  function initI18n() {
-    /* 插入语言选择器到 header */
-    var toolbar = document.querySelector('.toolbar');
-    if (toolbar && !document.getElementById('langSelect')) {
-      var wrapper = document.createElement('div');
-      wrapper.className = 'lang-switcher';
-      wrapper.innerHTML =
-        '<select id="langSelect" aria-label="Language">' +
-          '<option value="zh">中文</option>' +
-          '<option value="en">English</option>' +
-        '</select>';
-      toolbar.parentNode.appendChild(wrapper);
+  function getLangObj(code) {
+    for (var i = 0; i < LANG_OPTIONS.length; i++) {
+      if (LANG_OPTIONS[i].code === code) return LANG_OPTIONS[i];
     }
+    return LANG_OPTIONS[0];
+  }
 
-    /* 应用翻译到静态 DOM */
-    setLang(saved);
+  function updateSwitcherUI(lang) {
+    if (!switcherEl) return;
+    var obj = getLangObj(lang);
+    var trigger = switcherEl.querySelector('.lang-trigger');
+    if (trigger) {
+      trigger.querySelector('.lang-flag').textContent = obj.flag;
+      trigger.querySelector('.lang-name').textContent = obj.label;
+    }
+    /* 更新菜单选中态 */
+    var items = switcherEl.querySelectorAll('.lang-menu-item');
+    items.forEach(function (item) {
+      item.classList.toggle('active', item.dataset.lang === lang);
+    });
+  }
 
-    /* 监听用户切换 */
-    var sel = document.getElementById('langSelect');
-    if (sel) {
-      sel.value = saved;
-      sel.addEventListener('change', function () {
-        setLang(this.value);
+  function closeMenu() {
+    if (menuEl) {
+      menuEl.classList.remove('open');
+      switcherEl.classList.remove('open');
+    }
+  }
+
+  function buildSwitcher() {
+    var saved = localStorage.getItem('a11y-lang') || 'zh';
+    var obj = getLangObj(saved);
+
+    switcherEl = document.createElement('div');
+    switcherEl.className = 'lang-switcher';
+    switcherEl.setAttribute('role', 'navigation');
+    switcherEl.setAttribute('aria-label', 'Language selector');
+
+    /* 触发按钮 */
+    var trigger = document.createElement('button');
+    trigger.className = 'lang-trigger';
+    trigger.type = 'button';
+    trigger.innerHTML =
+      '<span class="lang-flag">' + obj.flag + '</span>' +
+      '<span class="lang-name">' + obj.label + '</span>' +
+      '<svg class="lang-chevron" width="10" height="10" viewBox="0 0 10 10"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+    /* 下拉菜单 */
+    menuEl = document.createElement('div');
+    menuEl.className = 'lang-menu';
+    LANG_OPTIONS.forEach(function (opt) {
+      var item = document.createElement('button');
+      item.className = 'lang-menu-item' + (opt.code === saved ? ' active' : '');
+      item.type = 'button';
+      item.dataset.lang = opt.code;
+      item.innerHTML =
+        '<span class="lang-flag">' + opt.flag + '</span>' +
+        '<span class="lang-name">' + opt.label + '</span>' +
+        (opt.code === saved ? '<svg class="lang-check" width="14" height="14" viewBox="0 0 14 14"><path d="M3 7.5l3 3 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '');
+      item.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (opt.code !== window.I18N_CURRENT) {
+          setLang(opt.code);
+        }
+        closeMenu();
       });
+      menuEl.appendChild(item);
+    });
+
+    switcherEl.appendChild(trigger);
+    switcherEl.appendChild(menuEl);
+
+    /* 点击触发按钮 */
+    trigger.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var isOpen = menuEl.classList.contains('open');
+      if (isOpen) {
+        closeMenu();
+      } else {
+        menuEl.classList.add('open');
+        switcherEl.classList.add('open');
+      }
+    });
+
+    /* 点击外部关闭 */
+    document.addEventListener('click', function () {
+      closeMenu();
+    });
+
+    /* ESC 关闭 */
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeMenu();
+    });
+
+    return switcherEl;
+  }
+
+  /* ===== 初始化 ===== */
+  function initI18n() {
+    var toolbar = document.querySelector('.toolbar');
+    if (toolbar && !document.querySelector('.lang-switcher')) {
+      var switcher = buildSwitcher();
+      toolbar.parentNode.appendChild(switcher);
     }
+
+    var saved = localStorage.getItem('a11y-lang') || 'zh';
+    setLang(saved);
   }
 
   if (document.readyState === 'loading') {
