@@ -373,132 +373,147 @@ function renderForm(fnName, meta, selectedOverloadIndex = 0) {
   const node = state.selectedNode;
   const hasNode = !!node;
 
-  /* 如果有多个重载，显示选择器 */
-  let overloadSelectorHtml = '';
-  const overloads = meta.overloads || [];
-  if (overloads.length > 1) {
-    const optionsHtml = overloads.map((ol, i) => {
-      const paramsStr = ol.params.map(p => `${p.type} ${p.name}`).join(', ');
-      return `<option value="${i}">${t('form.overload.prefix')} ${i + 1}: ${paramsStr}</option>`;
-    }).join('');
-    overloadSelectorHtml = `
-      <label>${t('form.overload.label')}</label>
-      <select id="overloadSelector">
-        ${optionsHtml}
-      </select>
-    `;
-  }
+  const formBody = $('#formBody');
+  formBody.innerHTML = '';
 
-  /* 获取当前选中的重载 */
+  /* 函数签名 */
+  const overloads = meta.overloads || [];
   const currentOverload = overloads[selectedOverloadIndex] || { params: [], returnType: 'void' };
 
-  /* 动态判断：根据当前重载的参数类型，决定是否需要定位方式 */
+  const sig = document.createElement('div');
+  sig.innerHTML = `<b>${fnName}</b> <span class="hint">→ ${currentOverload.returnType || 'void'}</span>`;
+  formBody.appendChild(sig);
+
+  /* 重载选择器 */
+  if (overloads.length > 1) {
+    const lbl = document.createElement('label');
+    lbl.textContent = t('form.overload.label');
+    formBody.appendChild(lbl);
+
+    const olOpts = overloads.map((ol, i) => {
+      const paramsStr = ol.params.map(p => `${p.type} ${p.name}`).join(', ');
+      return { value: String(i), label: `${t('form.overload.prefix')} ${i + 1}: ${paramsStr}` };
+    });
+    const olDd = createDropdown(olOpts, String(selectedOverloadIndex), (val) => {
+      renderForm(fnName, meta, parseInt(val));
+    });
+    olDd.id = 'overloadSelector';
+    formBody.appendChild(olDd);
+  }
+
+  /* 定位方式选择器 */
   const needsSelector = hasNode && currentOverload.params.some(p =>
     p.type === 'AccessibilityNodeInfo' || p.type === 'NodeInfo'
   );
-
-  let selectorRow = '';
   if (needsSelector) {
-    const opts = [];
-    if (node.text)      opts.push({k:'text',  v:node.text,    label:'text'});
-    if (node.viewId)    opts.push({k:'id',    v:node.viewId,  label:'id'});
-    if (node.desc)      opts.push({k:'text',  v:node.desc,    label:'desc'});
-    if (node.className) opts.push({k:'class', v:node.className, label:'class'});
-    opts.push({k:'coord', v:`${Math.round((node.left+node.right)/2)},${Math.round((node.top+node.bottom)/2)}`, label:'coord'});
-    selectorRow = `
-      <label>${t('form.selector.label')}</label>
-      <select id="selectorMode">
-        ${opts.map((o, i) => `<option value="${i}" data-k="${o.k}" data-v="${escapeAttr(o.v)}">${o.label}: ${escapeHtml(o.v.slice(0,40))}</option>`).join('')}
-      </select>
-    `;
+    const selOpts = [];
+    if (node.text)      selOpts.push({k:'text',  v:node.text,      label:`text: ${node.text.slice(0,40)}`});
+    if (node.viewId)    selOpts.push({k:'id',    v:node.viewId,    label:`id: ${node.viewId.slice(0,40)}`});
+    if (node.desc)      selOpts.push({k:'text',  v:node.desc,      label:`desc: ${node.desc.slice(0,40)}`});
+    if (node.className) selOpts.push({k:'class', v:node.className, label:`class: ${node.className.slice(0,40)}`});
+    selOpts.push({k:'coord', v:`${Math.round((node.left+node.right)/2)},${Math.round((node.top+node.bottom)/2)}`, label:`coord: ${Math.round((node.left+node.right)/2)},${Math.round((node.top+node.bottom)/2)}`});
+
+    const lbl = document.createElement('label');
+    lbl.textContent = t('form.selector.label');
+    formBody.appendChild(lbl);
+
+    const ddItems = selOpts.map(o => ({ value: o.k + '|' + o.v, label: o.label }));
+    const selDd = createDropdown(ddItems, ddItems[0].value, () => {});
+    selDd.id = 'selectorMode';
+    selDd._kvList = selOpts;
+    formBody.appendChild(selDd);
   }
 
+  /* 参数字段 */
   const extraParams = (currentOverload.params || []).filter(p => {
     if (['AccessibilityNodeInfo','NodeInfo','ArrayList','List','HashMap','Map','Object'].includes(p.type)) return false;
     if (p.type.endsWith('[]')) return false;
     if (['argsConfigs','root','nodes','nodesMap'].includes(p.name)) return false;
-    /* 当前重载需要 NodeInfo 时,key/value 由"定位方式"下拉提供;
-       否则把 key/value 当普通参数显示,按节点属性预填 */
     if (needsSelector && (p.name === 'key' || p.name === 'value')) return false;
     return true;
   });
 
-  const paramFields = extraParams.map(p => {
+  extraParams.forEach(p => {
     const def = paramDefault(p, node);
-    const labelHtml = `<label>${p.name} (${p.type})</label>`;
-    if (p.type === 'String') {
-      return `${labelHtml}<input type="text" data-pname="${p.name}" data-ptype="${p.type}" value="${escapeAttr(def)}">`;
-    }
-    if (p.type === 'int' || p.type === 'long') {
-      return `${labelHtml}<input type="number" data-pname="${p.name}" data-ptype="${p.type}" value="${escapeAttr(def || '0')}">`;
-    }
-    if (p.type === 'double' || p.type === 'float') {
-      return `${labelHtml}<input type="number" step="0.01" data-pname="${p.name}" data-ptype="${p.type}" value="${escapeAttr(def || '0')}">`;
-    }
+    const lbl = document.createElement('label');
+    lbl.textContent = `${p.name} (${p.type})`;
+    formBody.appendChild(lbl);
+
     if (p.type === 'boolean') {
-      const tSel = def === 'true' ? ' selected' : '';
-      const fSel = def === 'true' ? '' : ' selected';
-      return `${labelHtml}<select data-pname="${p.name}" data-ptype="${p.type}"><option${tSel}>true</option><option${fSel}>false</option></select>`;
+      const boolOpts = [{ value: 'true', label: 'true' }, { value: 'false', label: 'false' }];
+      const boolDd = createDropdown(boolOpts, def || 'false', () => {});
+      boolDd.dataset.pname = p.name;
+      boolDd.dataset.ptype = p.type;
+      formBody.appendChild(boolDd);
+    } else {
+      const inp = document.createElement('input');
+      inp.type = (p.type === 'int' || p.type === 'long') ? 'number'
+               : (p.type === 'double' || p.type === 'float') ? 'number'
+               : 'text';
+      if (p.type === 'double' || p.type === 'float') inp.step = '0.01';
+      inp.dataset.pname = p.name;
+      inp.dataset.ptype = p.type;
+      inp.value = def || ((p.type === 'int' || p.type === 'long' || p.type === 'double' || p.type === 'float') ? '0' : '');
+      formBody.appendChild(inp);
     }
-    return `${labelHtml}<input type="text" data-pname="${p.name}" data-ptype="${p.type}" value="${escapeAttr(def)}">`;
-  }).join('');
+  });
 
-  $('#formBody').innerHTML = `
-    <div><b>${fnName}</b> <span class="hint">→ ${currentOverload.returnType || 'void'}</span></div>
-    ${overloadSelectorHtml}
-    ${selectorRow}
-    ${paramFields}
-    <div class="btnRow">
-      <button id="btnAddStep">${t('form.btnAddStep')}</button>
-      <button id="btnRunStep" class="secondary">${t('form.btnRunStep')}</button>
-    </div>
-  `;
+  /* 按钮行 */
+  const btnRow = document.createElement('div');
+  btnRow.className = 'btnRow';
+  const btnAdd = document.createElement('button');
+  btnAdd.id = 'btnAddStep';
+  btnAdd.textContent = t('form.btnAddStep');
+  const btnRun = document.createElement('button');
+  btnRun.id = 'btnRunStep';
+  btnRun.className = 'secondary';
+  btnRun.textContent = t('form.btnRunStep');
+  btnRow.appendChild(btnAdd);
+  btnRow.appendChild(btnRun);
+  formBody.appendChild(btnRow);
 
-  /* 如果有重载选择器，监听切换事件 */
-  if (overloads.length > 1) {
-    const overloadSelect = document.getElementById('overloadSelector');
-    if (overloadSelect) {
-      overloadSelect.onchange = (e) => {
-        const newIndex = parseInt(e.target.value);
-        renderForm(fnName, meta, newIndex);
-      };
-    }
-  }
-
-  $('#btnAddStep').onclick = () => addStep(buildCallCode(fnName, meta, selectedOverloadIndex));
-  $('#btnRunStep').onclick = async () => executeCode(buildCallCode(fnName, meta, selectedOverloadIndex));
+  btnAdd.onclick = () => addStep(buildCallCode(fnName, meta, selectedOverloadIndex));
+  btnRun.onclick = async () => executeCode(buildCallCode(fnName, meta, selectedOverloadIndex));
 }
 
 /* ===== 7. 拼接调用代码 ===== */
 function buildCallCode(fnName, meta, selectedOverloadIndex = 0) {
   const args = [];
-  const sel = $('#selectorMode');
   const overloads = meta.overloads || [];
   const currentOverload = overloads[selectedOverloadIndex] || { params: [] };
 
-  /* 动态判断：当前重载是否需要定位方式 */
   const needsSelector = currentOverload.params.some(p =>
     p.type === 'AccessibilityNodeInfo' || p.type === 'NodeInfo'
   );
 
-  if (sel && needsSelector) {
-    const opt = sel.options[sel.selectedIndex];
-    const k = opt.dataset.k;
-    const v = opt.dataset.v;
-    if (k === 'coord') {
-      const [cx, cy] = v.split(',');
-      return `tap(${cx}, ${cy});`;
-    } else {
-      args.push(`"${k}"`, jsonStr(v));
+  /* 定位方式：从自定义下拉组件读取 */
+  if (needsSelector) {
+    const selDd = $('#selectorMode');
+    if (selDd && selDd._kvList) {
+      const val = selDd.getValue();
+      const kv = selDd._kvList.find(o => o.k + '|' + o.v === val);
+      if (kv) {
+        if (kv.k === 'coord') {
+          const [cx, cy] = kv.v.split(',');
+          return `tap(${cx}, ${cy});`;
+        } else {
+          args.push(`"${kv.k}"`, jsonStr(kv.v));
+        }
+      }
     }
   }
 
-  /* 添加函数的其他参数 */
-  document.querySelectorAll('#formBody [data-pname]').forEach(el => {
-    const t = el.dataset.ptype;
+  /* 其他参数：从自定义下拉组件或 input 读取 */
+  document.querySelectorAll('#formBody .dropdown[data-pname]').forEach(el => {
+    const pt = el.dataset.ptype;
+    const raw = el.getValue();
+    if (pt === 'boolean') args.push(raw);
+    else args.push(jsonStr(raw));
+  });
+  document.querySelectorAll('#formBody input[data-pname]').forEach(el => {
+    const pt = el.dataset.ptype;
     const raw = el.value;
-    if (t === 'String') args.push(jsonStr(raw));
-    else if (t === 'boolean') args.push(raw);
+    if (pt === 'String') args.push(jsonStr(raw));
     else args.push(raw || '0');
   });
 
