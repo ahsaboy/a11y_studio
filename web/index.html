@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0A0F1C">
+<title>A11y Studio</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Fira+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/style.css">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-logo" viewBox="0 0 24 24">
+      <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 3l8.5 4.9v8.2L12 21l-8.5-4.9V7.9L12 3zm0 4.8v8.4M7.6 10.4l8.8 0M7.6 13.6l8.8 0"/>
+    </symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24">
+      <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M3 12a9 9 0 0 1 15.5-6.3L21 8M21 4v4h-4M21 12a9 9 0 0 1-15.5 6.3L3 16M3 20v-4h4"/>
+    </symbol>
+    <symbol id="i-run" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M8 5.14v13.72a1 1 0 0 0 1.55.83l10.4-6.86a1 1 0 0 0 0-1.66L9.55 4.31A1 1 0 0 0 8 5.14z"/>
+    </symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24">
+      <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13M10 11v7M14 11v7"/>
+    </symbol>
+    <symbol id="i-export" viewBox="0 0 24 24">
+      <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0-12l-4 4m4-4l4 4M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2"/>
+    </symbol>
+    <symbol id="i-search" viewBox="0 0 24 24">
+      <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <path d="M20 20l-3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-zap" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/>
+    </symbol>
+    <symbol id="i-list" viewBox="0 0 24 24">
+      <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+    </symbol>
+    <symbol id="i-code" viewBox="0 0 24 24">
+      <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M8 6l-5 6 5 6M16 6l5 6-5 6M14 4l-4 16"/>
+    </symbol>
+    <symbol id="i-info" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <path d="M12 11v6M12 8h.01" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24">
+      <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/>
+    </symbol>
+    <symbol id="i-close" viewBox="0 0 24 24">
+      <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/>
+    </symbol>
+    <symbol id="i-grip" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M9 6a1.5 1.5 0 1 1 0 0zM15 6a1.5 1.5 0 1 1 0 0zM9 12a1.5 1.5 0 1 1 0 0zM15 12a1.5 1.5 0 1 1 0 0zM9 18a1.5 1.5 0 1 1 0 0zM15 18a1.5 1.5 0 1 1 0 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-terminal" viewBox="0 0 24 24">
+      <rect x="3" y="4" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <path d="M7 9l3 3-3 3M13 15h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+</head>
+<body>
+
+<header class="topbar" role="banner">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true"><svg class="ic ic-22"><use href="#i-logo"/></svg></span>
+    <div class="brand-title">
+      <h1>A11y Studio</h1>
+      <span class="brand-sub">Visual Accessibility Inspector</span>
+    </div>
+  </div>
+
+  <div class="conn" aria-live="polite">
+    <span class="dot dot-pulse" aria-hidden="true"></span>
+    <span id="status" class="conn-text">就绪 · 等待首次拉取</span>
+  </div>
+
+  <div class="toolbar" role="toolbar" aria-label="主操作">
+    <button id="btnRefresh" class="btn btn-secondary" title="重新拉取截图和节点树">
+      <svg class="ic"><use href="#i-refresh"/></svg><span>刷新截图</span>
+    </button>
+    <label class="toolbar-toggle" title="勾选后刷新时仅拉节点树,不重新加载截图(适合截图传输慢或不需要画面的场景)"
+           style="display:inline-flex;align-items:center;gap:6px;color:#9ca3af;font-size:13px;padding:4px 10px;cursor:pointer;user-select:none;border:1px solid rgba(148,163,184,0.18);border-radius:8px;">
+      <input type="checkbox" id="noScreenshot" style="margin:0;cursor:pointer;accent-color:#60a5fa;">
+      <span>跳过截图</span>
+    </label>
+    <div class="seg-toggle" role="group" aria-label="截图水平对齐" title="截图在画布区内的水平对齐位置(inspector 拖宽时尤其有用)">
+      <button type="button" data-align="left"   class="seg-btn" aria-label="截图靠左">左</button>
+      <button type="button" data-align="center" class="seg-btn" aria-label="截图居中">中</button>
+      <button type="button" data-align="right"  class="seg-btn" aria-label="截图靠右">右</button>
+    </div>
+    <button id="btnRun" class="btn btn-primary" title="运行下方代码编辑器中的内容">
+      <svg class="ic"><use href="#i-run"/></svg><span>运行脚本</span>
+    </button>
+    <button id="btnClear" class="btn btn-ghost" title="清空步骤时间线">
+      <svg class="ic"><use href="#i-trash"/></svg><span>清空步骤</span>
+    </button>
+    <button id="btnExport" class="btn btn-ghost" title="复制当前代码到剪贴板">
+      <svg class="ic"><use href="#i-export"/></svg><span>复制代码</span>
+    </button>
+  </div>
+</header>
+
+<main class="workspace">
+
+  <!-- ===== Canvas 占满整列高度 ===== -->
+  <section id="canvasPane" class="canvas-pane" aria-label="截图画布">
+    <div class="canvas-stage">
+      <canvas id="canvas"></canvas>
+    </div>
+
+    <!-- 鼠标悬浮 tooltip(由 app.js 动态填充) -->
+    <div id="hoverTooltip" class="hover-tooltip" role="tooltip" hidden></div>
+
+    <!-- ===== 悬浮节点属性卡片（默认 collapsed，选中节点后自动展开） ===== -->
+    <section class="panel floating-panel collapsed" id="propsPanel"
+             aria-labelledby="hd-props" data-pos="bottom-left">
+      <header class="panel-head drag-handle" id="propsHandle">
+        <svg class="ic ic-14 grip-icon" aria-hidden="true"><use href="#i-grip"/></svg>
+        <svg class="ic ic-14" aria-hidden="true"><use href="#i-info"/></svg>
+        <h2 id="hd-props">节点属性</h2>
+        <span class="panel-meta" id="propsMeta"></span>
+        <button class="icon-btn" id="btnPropsCollapse" type="button"
+                title="折叠/展开" aria-label="折叠/展开节点属性">
+          <svg class="ic ic-14 chev"><use href="#i-chev"/></svg>
+        </button>
+        <button class="icon-btn" id="btnPropsClose" type="button"
+                title="关闭" aria-label="关闭节点属性面板">
+          <svg class="ic ic-14"><use href="#i-close"/></svg>
+        </button>
+      </header>
+      <div id="propsBody" class="panel-body">
+        <p class="hint">在左侧截图上点击一个节点</p>
+      </div>
+    </section>
+
+    <!-- 重新打开按钮（关闭后显示） -->
+    <button id="btnPropsReopen" class="btn btn-ghost reopen-btn" type="button"
+            title="重新打开节点属性面板" hidden>
+      <svg class="ic ic-14"><use href="#i-info"/></svg><span>节点属性</span>
+    </button>
+  </section>
+
+  <!-- ===== 右侧 inspector：可拖宽、可滚动、容器查询切换两列 ===== -->
+  <aside id="inspector" class="inspector" aria-label="节点检查器">
+
+    <div class="resizer" id="inspectorResizer"
+         role="separator" aria-orientation="vertical"
+         aria-label="拖动调整 inspector 宽度，双击重置"
+         tabindex="0" title="拖动调整宽度 · 双击重置">
+      <span class="resizer-grip" aria-hidden="true"></span>
+    </div>
+
+    <div class="inspector-scroll">
+      <div class="inspector-panels">
+
+        <div class="left-col">
+    <section class="panel" id="actionsPanel" aria-labelledby="hd-actions">
+      <header class="panel-head">
+        <svg class="ic ic-14"><use href="#i-zap"/></svg>
+        <h2 id="hd-actions">可用动作</h2>
+      </header>
+      <div class="panel-body">
+        <div class="sub-label">推荐</div>
+        <div id="actionsBody" class="chip-cloud"></div>
+
+        <div class="sub-label sub-label-row">
+          <span>全部函数</span>
+          <div class="search-field">
+            <svg class="ic ic-14" aria-hidden="true"><use href="#i-search"/></svg>
+            <input type="text" id="fnFilter" placeholder="搜索 click / setText / scrollTo ..." aria-label="搜索函数">
+          </div>
+        </div>
+        <div id="allFnsBody" class="chip-cloud chip-cloud-scroll"></div>
+      </div>
+    </section>
+        </div>
+
+        <div class="right-col">
+    <section class="panel" id="formPanel" aria-labelledby="hd-form">
+      <header class="panel-head">
+        <svg class="ic ic-14"><use href="#i-code"/></svg>
+        <h2 id="hd-form">参数</h2>
+      </header>
+      <div id="formBody" class="panel-body">
+        <p class="hint">先选一个动作</p>
+      </div>
+    </section>
+
+    <section class="panel" id="stepsPanel" aria-labelledby="hd-steps">
+      <header class="panel-head">
+        <svg class="ic ic-14"><use href="#i-list"/></svg>
+        <h2 id="hd-steps">步骤时间线</h2>
+        <span class="panel-meta" id="stepsMeta"></span>
+      </header>
+      <ol id="stepsList" class="steps-list" aria-label="步骤列表"></ol>
+    </section>
+
+    <section class="panel" id="codePanel" aria-labelledby="hd-code">
+      <header class="panel-head">
+        <svg class="ic ic-14"><use href="#i-code"/></svg>
+        <h2 id="hd-code">代码编辑器</h2>
+        <span class="badge badge-mono">可编辑</span>
+        <button class="icon-btn icon-btn-text" id="btnCodeReset" type="button"
+                title="按时间线重新生成代码，覆盖编辑内容">
+          <svg class="ic ic-14"><use href="#i-refresh"/></svg><span>重新生成</span>
+        </button>
+      </header>
+      <textarea id="codePreview"
+                class="code-editor"
+                spellcheck="false"
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="off"
+                aria-label="可编辑的脚本代码"
+                placeholder="// 还没有步骤&#10;// 在左侧选中节点 → 选择动作 → 添加到时间线&#10;// 或直接在此输入 BeanShell Java 代码后点击「运行脚本」"></textarea>
+    </section>
+    <section class="panel" id="execPanel" aria-labelledby="hd-exec">
+      <header class="panel-head">
+        <svg class="ic ic-14"><use href="#i-terminal"/></svg>
+        <h2 id="hd-exec">执行结果</h2>
+      </header>
+      <div id="execResult" aria-live="polite"></div>
+    </section>
+        </div>
+
+      </div>
+    </div>
+  </aside>
+
+</main>
+
+<!-- ===== 浮窗交互（折叠 / 关闭 / 拖动） ===== -->
+<script>
+(function() {
+  'use strict';
+
+  const panel    = document.getElementById('propsPanel');
+  const handle   = document.getElementById('propsHandle');
+  const btnFold  = document.getElementById('btnPropsCollapse');
+  const btnClose = document.getElementById('btnPropsClose');
+  const btnReopen= document.getElementById('btnPropsReopen');
+
+  // 折叠 / 展开
+  btnFold.addEventListener('click', (e) => {
+    e.stopPropagation();
+    panel.classList.toggle('collapsed');
+  });
+
+  // 拖动状态（pressing=按下了 / dragged=确实移动过）
+  // 用变量而非 CSS class 判断 click 是否应该 toggle，避免 setTimeout 时序问题
+  let pressing = false;
+  let dragged  = false;
+  let originX = 0, originY = 0, panelL = 0, panelT = 0;
+  const DRAG_THRESHOLD = 4;
+
+  // 点击 header 空白处：未拖动时切换折叠
+  handle.addEventListener('click', (e) => {
+    if (e.target.closest('button')) return;
+    if (dragged) { dragged = false; return; }
+    panel.classList.toggle('collapsed');
+  });
+
+  // 关闭
+  btnClose.addEventListener('click', (e) => {
+    e.stopPropagation();
+    panel.classList.add('hidden');
+    btnReopen.hidden = false;
+  });
+  btnReopen.addEventListener('click', () => {
+    panel.classList.remove('hidden', 'collapsed');
+    btnReopen.hidden = true;
+  });
+
+  // 暴露给 app.js 在选中节点时调用
+  window.openPropsPanel = function() {
+    panel.classList.remove('hidden', 'collapsed');
+    btnReopen.hidden = true;
+  };
+
+  function pointFrom(e) { return e.touches ? e.touches[0] : e; }
+
+  function onDown(e) {
+    if (e.target.closest('button')) return;
+    const pt = pointFrom(e);
+    const rect = panel.getBoundingClientRect();
+    const parentRect = panel.parentElement.getBoundingClientRect();
+    // 锁定到绝对 left/top，去掉 right/bottom 锚定
+    panelL = rect.left - parentRect.left;
+    panelT = rect.top  - parentRect.top;
+    panel.style.left   = panelL + 'px';
+    panel.style.top    = panelT + 'px';
+    panel.style.right  = 'auto';
+    panel.style.bottom = 'auto';
+
+    originX = pt.clientX;
+    originY = pt.clientY;
+    pressing = true;
+    dragged = false;
+    // 不在这里 preventDefault，也不立即加 'dragging' class
+    // 让单击事件能正常派发去触发折叠
+  }
+  function onMove(e) {
+    if (!pressing) return;
+    const pt = pointFrom(e);
+    const dx = pt.clientX - originX;
+    const dy = pt.clientY - originY;
+
+    // 阈值内不算拖动，留给 click toggle 折叠
+    if (!dragged) {
+      if (Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD) return;
+      dragged = true;
+      panel.classList.add('dragging');
+      document.body.style.userSelect = 'none';
+    }
+    e.preventDefault();
+
+    const parentRect = panel.parentElement.getBoundingClientRect();
+    const pw = panel.offsetWidth;
+    const ph = panel.offsetHeight;
+    let nx = panelL + dx;
+    let ny = panelT + dy;
+    nx = Math.max(8, Math.min(parentRect.width  - pw - 8, nx));
+    ny = Math.max(8, Math.min(parentRect.height - ph - 8, ny));
+    panel.style.left = nx + 'px';
+    panel.style.top  = ny + 'px';
+  }
+  function onUp() {
+    if (!pressing) return;
+    pressing = false;
+    document.body.style.userSelect = '';
+    panel.classList.remove('dragging');
+    // dragged 不在这里重置 —— 让随后立刻派发的 click handler 能读到，
+    // click handler 会自己 reset 它
+  }
+
+  handle.addEventListener('mousedown', onDown);
+  handle.addEventListener('touchstart', onDown, { passive: false });
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('touchmove', onMove, { passive: false });
+  document.addEventListener('mouseup', onUp);
+  document.addEventListener('touchend', onUp);
+})();
+
+// ===== 代码编辑器辅助：重新生成按钮 + Tab 缩进 =====
+(function() {
+  'use strict';
+  const editor = document.getElementById('codePreview');
+  const btnReset = document.getElementById('btnCodeReset');
+
+  // 重新生成（依赖 app.js 暴露的 generateFullCode 函数）
+  btnReset.addEventListener('click', () => {
+    if (typeof window.generateFullCode === 'function') {
+      editor.value = window.generateFullCode();
+    }
+  });
+
+  // 编辑器 Tab 键插入两个空格而不是切换焦点
+  editor.addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const s = editor.selectionStart, p = editor.selectionEnd;
+      editor.setRangeText('  ', s, p, 'end');
+    }
+  });
+})();
+
+// ===== Inspector 宽度调整:拖动 + 双击重置 + localStorage 记忆 =====
+(function() {
+  'use strict';
+  const STORAGE_KEY = 'a11y-inspector-w';
+  const MIN_W = 320;
+  const MAX_RATIO = 0.75;
+
+  const ws       = document.querySelector('.workspace');
+  const aside    = document.getElementById('inspector');
+  const resizer  = document.getElementById('inspectorResizer');
+
+  function clamp(w) {
+    const maxW = Math.max(MIN_W, Math.floor(window.innerWidth * MAX_RATIO));
+    return Math.max(MIN_W, Math.min(maxW, w));
+  }
+  function applyWidth(w) {
+    w = clamp(w);
+    ws.style.gridTemplateColumns = `minmax(0, 1fr) ${w}px`;
+    // 通知 app.js 重算 canvas 缩放
+    if (typeof window.fitCanvas === 'function') window.fitCanvas();
+    return w;
+  }
+  function resetWidth() {
+    ws.style.gridTemplateColumns = '';
+    localStorage.removeItem(STORAGE_KEY);
+    if (typeof window.fitCanvas === 'function') window.fitCanvas();
+  }
+
+  // 恢复上次宽度
+  const saved = parseInt(localStorage.getItem(STORAGE_KEY), 10);
+  if (saved && saved >= MIN_W) applyWidth(saved);
+
+  // 拖动
+  let dragging = false, startX = 0, startW = 0, rafId = 0;
+
+  function onDown(e) {
+    const pt = e.touches ? e.touches[0] : e;
+    dragging = true;
+    startX = pt.clientX;
+    startW = aside.getBoundingClientRect().width;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    resizer.classList.add('active');
+    e.preventDefault();
+  }
+  function onMove(e) {
+    if (!dragging) return;
+    const pt = e.touches ? e.touches[0] : e;
+    const dx = startX - pt.clientX;
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => applyWidth(startW + dx));
+    e.preventDefault();
+  }
+  function onUp() {
+    if (!dragging) return;
+    dragging = false;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+    resizer.classList.remove('active');
+    const w = Math.round(aside.getBoundingClientRect().width);
+    localStorage.setItem(STORAGE_KEY, String(w));
+  }
+
+  resizer.addEventListener('mousedown',  onDown);
+  resizer.addEventListener('touchstart', onDown, { passive: false });
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('touchmove', onMove, { passive: false });
+  document.addEventListener('mouseup',   onUp);
+  document.addEventListener('touchend',  onUp);
+
+  // 双击重置 + 键盘左右箭头微调
+  resizer.addEventListener('dblclick', resetWidth);
+  resizer.addEventListener('keydown', (e) => {
+    const cur = aside.getBoundingClientRect().width;
+    const step = e.shiftKey ? 40 : 16;
+    if (e.key === 'ArrowLeft')  { applyWidth(cur + step); localStorage.setItem(STORAGE_KEY, String(Math.round(clamp(cur + step)))); e.preventDefault(); }
+    if (e.key === 'ArrowRight') { applyWidth(cur - step); localStorage.setItem(STORAGE_KEY, String(Math.round(clamp(cur - step)))); e.preventDefault(); }
+    if (e.key === 'Home')       { resetWidth(); e.preventDefault(); }
+  });
+
+  // 视口尺寸变化时夹住宽度上限，并让 canvas 跟随
+  window.addEventListener('resize', () => {
+    const w = aside.getBoundingClientRect().width;
+    const clamped = clamp(w);
+    if (clamped !== w) applyWidth(clamped);
+    else if (typeof window.fitCanvas === 'function') window.fitCanvas();
+  });
+
+  // ResizeObserver：宽度 ≥ 720px 时切两列，< 720px 回单列
+  new ResizeObserver(([entry]) => {
+    aside.classList.toggle('two-col', entry.contentRect.width >= 720);
+  }).observe(aside);
+})();
+</script>
+
+<script src="/app.js"></script>
+</body>
+</html>
