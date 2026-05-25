@@ -76,31 +76,31 @@
 
   <div class="conn" aria-live="polite">
     <span class="dot dot-pulse" aria-hidden="true"></span>
-    <span id="status" class="conn-text">就绪 · 等待首次拉取</span>
+    <span id="status" class="conn-text" data-i18n="status.ready">就绪 · 等待首次拉取</span>
   </div>
 
-  <div class="toolbar" role="toolbar" aria-label="主操作">
-    <button id="btnRefresh" class="btn btn-secondary" title="重新拉取截图和节点树">
-      <svg class="ic"><use href="#i-refresh"/></svg><span>刷新截图</span>
+  <div class="toolbar" role="toolbar" aria-label="主操作" data-i18n-aria="toolbar.aria">
+    <button id="btnRefresh" class="btn btn-secondary" title="重新拉取截图和节点树" data-i18n-title="btn.refresh.title">
+      <svg class="ic"><use href="#i-refresh"/></svg><span data-i18n="btn.refresh">刷新截图</span>
     </button>
-    <label class="toolbar-toggle" title="勾选后刷新时仅拉节点树,不重新加载截图(适合截图传输慢或不需要画面的场景)"
+    <label class="toolbar-toggle" title="勾选后刷新时仅拉节点树,不重新加载截图(适合截图传输慢或不需要画面的场景)" data-i18n-title="btn.skip.title"
            style="display:inline-flex;align-items:center;gap:6px;color:#9ca3af;font-size:13px;padding:4px 10px;cursor:pointer;user-select:none;border:1px solid rgba(148,163,184,0.18);border-radius:8px;">
       <input type="checkbox" id="noScreenshot" style="margin:0;cursor:pointer;accent-color:#60a5fa;">
-      <span>跳过截图</span>
+      <span data-i18n="btn.skip">跳过截图</span>
     </label>
-    <div class="seg-toggle" role="group" aria-label="截图水平对齐" title="截图在画布区内的水平对齐位置(inspector 拖宽时尤其有用)">
-      <button type="button" data-align="left"   class="seg-btn" aria-label="截图靠左">左</button>
-      <button type="button" data-align="center" class="seg-btn" aria-label="截图居中">中</button>
-      <button type="button" data-align="right"  class="seg-btn" aria-label="截图靠右">右</button>
+    <div class="seg-toggle" role="group" aria-label="截图水平对齐" title="截图在画布区内的水平对齐位置(inspector 拖宽时尤其有用)" data-i18n-aria="seg.aria" data-i18n-title="seg.title">
+      <button type="button" data-align="left"   class="seg-btn" aria-label="截图靠左" data-i18n-aria="align.left.aria" data-i18n="btn.align.left">左</button>
+      <button type="button" data-align="center" class="seg-btn" aria-label="截图居中" data-i18n-aria="align.center.aria" data-i18n="btn.align.center">中</button>
+      <button type="button" data-align="right"  class="seg-btn" aria-label="截图靠右" data-i18n-aria="align.right.aria" data-i18n="btn.align.right">右</button>
     </div>
-    <button id="btnRun" class="btn btn-primary" title="运行下方代码编辑器中的内容">
-      <svg class="ic"><use href="#i-run"/></svg><span>运行脚本</span>
+    <button id="btnRun" class="btn btn-primary" title="运行下方代码编辑器中的内容" data-i18n-title="btn.run.title">
+      <svg class="ic"><use href="#i-run"/></svg><span data-i18n="btn.run">运行脚本</span>
     </button>
-    <button id="btnClear" class="btn btn-ghost" title="清空步骤时间线">
-      <svg class="ic"><use href="#i-trash"/></svg><span>清空步骤</span>
+    <button id="btnClear" class="btn btn-ghost" title="清空步骤时间线" data-i18n-title="btn.clear.title">
+      <svg class="ic"><use href="#i-trash"/></svg><span data-i18n="btn.clear">清空步骤</span>
     </button>
-    <button id="btnExport" class="btn btn-ghost" title="复制当前代码到剪贴板">
-      <svg class="ic"><use href="#i-export"/></svg><span>复制代码</span>
+    <button id="btnExport" class="btn btn-ghost" title="复制当前代码到剪贴板" data-i18n-title="btn.export.title">
+      <svg class="ic"><use href="#i-export"/></svg><span data-i18n="btn.export">复制代码</span>
     </button>
   </div>
 </header>
@@ -108,7 +108,7 @@
 <main class="workspace">
 
   <!-- ===== Canvas 占满整列高度 ===== -->
-  <section id="canvasPane" class="canvas-pane" aria-label="截图画布">
+  <section id="canvasPane" class="canvas-pane" aria-label="截图画布" data-i18n-aria="canvas.aria">
     <div class="canvas-stage">
       <canvas id="canvas"></canvas>
     </div>
@@ -122,36 +122,36 @@
       <header class="panel-head drag-handle" id="propsHandle">
         <svg class="ic ic-14 grip-icon" aria-hidden="true"><use href="#i-grip"/></svg>
         <svg class="ic ic-14" aria-hidden="true"><use href="#i-info"/></svg>
-        <h2 id="hd-props">节点属性</h2>
+        <h2 id="hd-props" data-i18n="panel.props">节点属性</h2>
         <span class="panel-meta" id="propsMeta"></span>
         <button class="icon-btn" id="btnPropsCollapse" type="button"
-                title="折叠/展开" aria-label="折叠/展开节点属性">
+                title="折叠/展开" aria-label="折叠/展开节点属性" data-i18n-title="btn.props.collapse" data-i18n-aria="btn.props.collapse.aria">
           <svg class="ic ic-14 chev"><use href="#i-chev"/></svg>
         </button>
         <button class="icon-btn" id="btnPropsClose" type="button"
-                title="关闭" aria-label="关闭节点属性面板">
+                title="关闭" aria-label="关闭节点属性面板" data-i18n-title="btn.props.close" data-i18n-aria="btn.props.close.aria">
           <svg class="ic ic-14"><use href="#i-close"/></svg>
         </button>
       </header>
       <div id="propsBody" class="panel-body">
-        <p class="hint">在左侧截图上点击一个节点</p>
+        <p class="hint" data-i18n="panel.props.hint">在左侧截图上点击一个节点</p>
       </div>
     </section>
 
     <!-- 重新打开按钮（关闭后显示） -->
     <button id="btnPropsReopen" class="btn btn-ghost reopen-btn" type="button"
-            title="重新打开节点属性面板" hidden>
-      <svg class="ic ic-14"><use href="#i-info"/></svg><span>节点属性</span>
+            title="重新打开节点属性面板" data-i18n-title="btn.props.reopen" hidden>
+      <svg class="ic ic-14"><use href="#i-info"/></svg><span data-i18n="panel.props">节点属性</span>
     </button>
   </section>
 
   <!-- ===== 右侧 inspector：可拖宽、可滚动、容器查询切换两列 ===== -->
-  <aside id="inspector" class="inspector" aria-label="节点检查器">
+  <aside id="inspector" class="inspector" aria-label="节点检查器" data-i18n-aria="inspector.aria">
 
     <div class="resizer" id="inspectorResizer"
          role="separator" aria-orientation="vertical"
-         aria-label="拖动调整 inspector 宽度，双击重置"
-         tabindex="0" title="拖动调整宽度 · 双击重置">
+         aria-label="拖动调整 inspector 宽度，双击重置" data-i18n-aria="inspector.resizer.aria"
+         tabindex="0" title="拖动调整宽度 · 双击重置" data-i18n-title="inspector.resizer.title">
       <span class="resizer-grip" aria-hidden="true"></span>
     </div>
 
@@ -162,17 +162,17 @@
     <section class="panel" id="actionsPanel" aria-labelledby="hd-actions">
       <header class="panel-head">
         <svg class="ic ic-14"><use href="#i-zap"/></svg>
-        <h2 id="hd-actions">可用动作</h2>
+        <h2 id="hd-actions" data-i18n="panel.actions">可用动作</h2>
       </header>
       <div class="panel-body">
-        <div class="sub-label">推荐</div>
+        <div class="sub-label" data-i18n="panel.actions.recommended">推荐</div>
         <div id="actionsBody" class="chip-cloud"></div>
 
         <div class="sub-label sub-label-row">
-          <span>全部函数</span>
+          <span data-i18n="panel.actions.all">全部函数</span>
           <div class="search-field">
             <svg class="ic ic-14" aria-hidden="true"><use href="#i-search"/></svg>
-            <input type="text" id="fnFilter" placeholder="搜索 click / setText / scrollTo ..." aria-label="搜索函数">
+            <input type="text" id="fnFilter" placeholder="搜索 click / setText / scrollTo ..." aria-label="搜索函数" data-i18n-placeholder="fnFilter.placeholder" data-i18n-aria="fnFilter.aria">
           </div>
         </div>
         <div id="allFnsBody" class="chip-cloud chip-cloud-scroll"></div>
@@ -184,17 +184,17 @@
     <section class="panel" id="formPanel" aria-labelledby="hd-form">
       <header class="panel-head">
         <svg class="ic ic-14"><use href="#i-code"/></svg>
-        <h2 id="hd-form">参数</h2>
+        <h2 id="hd-form" data-i18n="panel.form">参数</h2>
       </header>
       <div id="formBody" class="panel-body">
-        <p class="hint">先选一个动作</p>
+        <p class="hint" data-i18n="panel.form.hint">先选一个动作</p>
       </div>
     </section>
 
     <section class="panel" id="stepsPanel" aria-labelledby="hd-steps">
       <header class="panel-head">
         <svg class="ic ic-14"><use href="#i-list"/></svg>
-        <h2 id="hd-steps">步骤时间线</h2>
+        <h2 id="hd-steps" data-i18n="panel.steps">步骤时间线</h2>
         <span class="panel-meta" id="stepsMeta"></span>
       </header>
       <ol id="stepsList" class="steps-list" aria-label="步骤列表"></ol>
@@ -203,11 +203,11 @@
     <section class="panel" id="codePanel" aria-labelledby="hd-code">
       <header class="panel-head">
         <svg class="ic ic-14"><use href="#i-code"/></svg>
-        <h2 id="hd-code">代码编辑器</h2>
-        <span class="badge badge-mono">可编辑</span>
+        <h2 id="hd-code" data-i18n="panel.code">代码编辑器</h2>
+        <span class="badge badge-mono" data-i18n="panel.code.badge">可编辑</span>
         <button class="icon-btn icon-btn-text" id="btnCodeReset" type="button"
-                title="按时间线重新生成代码，覆盖编辑内容">
-          <svg class="ic ic-14"><use href="#i-refresh"/></svg><span>重新生成</span>
+                title="按时间线重新生成代码，覆盖编辑内容" data-i18n-title="btn.codeReset.title">
+          <svg class="ic ic-14"><use href="#i-refresh"/></svg><span data-i18n="panel.code.reset">重新生成</span>
         </button>
       </header>
       <textarea id="codePreview"
@@ -216,13 +216,13 @@
                 autocomplete="off"
                 autocorrect="off"
                 autocapitalize="off"
-                aria-label="可编辑的脚本代码"
+                aria-label="可编辑的脚本代码" data-i18n-aria="codeEditor.aria"
                 placeholder="// 还没有步骤&#10;// 在左侧选中节点 → 选择动作 → 添加到时间线&#10;// 或直接在此输入 BeanShell Java 代码后点击「运行脚本」"></textarea>
     </section>
     <section class="panel" id="execPanel" aria-labelledby="hd-exec">
       <header class="panel-head">
         <svg class="ic ic-14"><use href="#i-terminal"/></svg>
-        <h2 id="hd-exec">执行结果</h2>
+        <h2 id="hd-exec" data-i18n="panel.exec">执行结果</h2>
       </header>
       <div id="execResult" aria-live="polite"></div>
     </section>
@@ -464,6 +464,7 @@
 })();
 </script>
 
+<script src="/i18n.js"></script>
 <script src="/app.js"></script>
 </body>
 </html>

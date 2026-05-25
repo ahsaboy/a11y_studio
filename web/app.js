@@ -24,7 +24,7 @@ function setStatus(msg) { $('#status').textContent = msg; }
 /* ===== 1. 加载截图(base64) + 节点树 ===== */
 async function refresh() {
   const skipShot = !!($('#noScreenshot') && $('#noScreenshot').checked);
-  setStatus(skipShot ? '正在拉取节点树...' : '正在拉取...');
+  setStatus(skipShot ? t('msg.fetchingTree') : t('msg.fetching'));
   try {
     const snapPromise = fetch('/snapshot').then(r => r.json());
     const shotPromise = skipShot ? Promise.resolve(null)
@@ -60,10 +60,10 @@ async function refresh() {
     canvas.style.height = (state.height * state.scale) + 'px';
 
     redraw();
-    const tag = skipShot ? ' · 已跳过截图' : '';
-    setStatus(`节点 ${state.nodes.length} 个 | ${state.width}×${state.height}${tag}`);
+    const tag = skipShot ? (' ' + t('msg.fetch.skipped')) : '';
+    setStatus(fmt('msg.fetch.ok', { n: state.nodes.length, w: state.width, h: state.height, tag: tag }));
   } catch (e) {
-    setStatus('拉取失败: ' + e.message);
+    setStatus(t('msg.fetch.fail') + ' ' + e.message);
   }
 }
 
@@ -177,7 +177,7 @@ function updateHoverTooltip(clientX, clientY) {
     return `<div class="row"><span class="k">${k}</span><span class="${cls}" title="${escapeAttr(shown)}">${escapeHtml(shown)}</span></div>`;
   }).join('');
   const meta = arr.length > 1
-    ? `<div class="meta">候选 ${state.hoverIndex + 1}/${arr.length} · 滚轮切层</div>`
+    ? `<div class="meta">${fmt('hover.candidate', { i: state.hoverIndex + 1, total: arr.length })}</div>`
     : '';
   hoverTipEl.innerHTML = rowsHtml + meta;
   hoverTipEl.hidden = false;
@@ -254,11 +254,11 @@ canvas.addEventListener('click', async (ev) => {
     state.selectedNode = state.nodes.find(n => n.path === res.props.path);
     renderProps(res.props);
     renderActions(res.recommended, res.allFunctions, res.globals);
-    $('#formBody').innerHTML = '<p class="hint">点击上方任意函数</p>';
+    $('#formBody').innerHTML = `<p class="hint">${t('hint.clickAction')}</p>`;
     redraw();
-    setStatus(`已选中 path=${res.props.path}`);
+    setStatus(t('msg.selected') + res.props.path);
   } catch (e) {
-    setStatus('inspect 失败: ' + e.message);
+    setStatus(t('msg.inspect.fail') + ' ' + e.message);
   }
 });
 
@@ -276,7 +276,7 @@ function renderProps(p) {
   $('#propsBody').querySelectorAll('.v[data-copy]').forEach(el => {
     el.addEventListener('click', () => {
       navigator.clipboard.writeText(el.dataset.copy);
-      setStatus('已复制: ' + el.dataset.copy.slice(0, 40));
+      setStatus(t('msg.copied') + ' ' + el.dataset.copy.slice(0, 40));
     });
   });
 }
@@ -292,7 +292,7 @@ function renderActions(recommended, allFns, globals) {
   $('#actionsBody').innerHTML = recHtml + globHtml;
 
   const fnHtml = allFns.map(f => {
-    const overloadBadge = f.totalOverloads > 1 ? `<span class="overload-badge" title="${f.totalOverloads} 个重载">${f.totalOverloads}</span>` : '';
+    const overloadBadge = f.totalOverloads > 1 ? `<span class="overload-badge" title="${f.totalOverloads} ${t('form.overload.prefix')}">${f.totalOverloads}</span>` : '';
     return `<span class="fnChip" data-fn="${f.name}" data-meta='${escapeAttr(JSON.stringify(f))}'>${f.name}${overloadBadge}</span>`;
   }).join('');
   $('#allFnsBody').innerHTML = fnHtml;
@@ -379,10 +379,10 @@ function renderForm(fnName, meta, selectedOverloadIndex = 0) {
   if (overloads.length > 1) {
     const optionsHtml = overloads.map((ol, i) => {
       const paramsStr = ol.params.map(p => `${p.type} ${p.name}`).join(', ');
-      return `<option value="${i}">重载 ${i + 1}: ${paramsStr}</option>`;
+      return `<option value="${i}">${t('form.overload.prefix')} ${i + 1}: ${paramsStr}</option>`;
     }).join('');
     overloadSelectorHtml = `
-      <label>选择重载版本</label>
+      <label>${t('form.overload.label')}</label>
       <select id="overloadSelector">
         ${optionsHtml}
       </select>
@@ -406,7 +406,7 @@ function renderForm(fnName, meta, selectedOverloadIndex = 0) {
     if (node.className) opts.push({k:'class', v:node.className, label:'class'});
     opts.push({k:'coord', v:`${Math.round((node.left+node.right)/2)},${Math.round((node.top+node.bottom)/2)}`, label:'coord'});
     selectorRow = `
-      <label>定位方式</label>
+      <label>${t('form.selector.label')}</label>
       <select id="selectorMode">
         ${opts.map((o, i) => `<option value="${i}" data-k="${o.k}" data-v="${escapeAttr(o.v)}">${o.label}: ${escapeHtml(o.v.slice(0,40))}</option>`).join('')}
       </select>
@@ -449,8 +449,8 @@ function renderForm(fnName, meta, selectedOverloadIndex = 0) {
     ${selectorRow}
     ${paramFields}
     <div class="btnRow">
-      <button id="btnAddStep">添加到时间线</button>
-      <button id="btnRunStep" class="secondary">单独执行</button>
+      <button id="btnAddStep">${t('form.btnAddStep')}</button>
+      <button id="btnRunStep" class="secondary">${t('form.btnRunStep')}</button>
     </div>
   `;
 
@@ -529,7 +529,7 @@ function renderSteps() {
 }
 
 function generateFullCode() {
-  if (state.steps.length === 0) return '// 还没有步骤';
+  if (state.steps.length === 0) return '// ' + t('hint.noSteps');
   const lines = ['a11Y.set();', 'waitNodesTimeout = 10000;', ''];
   for (const s of state.steps) lines.push(s.code);
   return lines.join('\n');
@@ -538,7 +538,7 @@ window.generateFullCode = generateFullCode;
 
 /* ===== 9. 执行代码 ===== */
 async function executeCode(code) {
-  setStatus('执行中...');
+  setStatus(t('msg.executing'));
   $('#execResult').textContent = '';
   try {
     const res = await fetch('/execute', {
@@ -550,13 +550,13 @@ async function executeCode(code) {
       $('#execResult').textContent =
         '✓ result=' + res.result +
         (res.stdout ? '\nstdout: ' + res.stdout : '');
-      setStatus('执行完成');
+      setStatus(t('msg.exec.done'));
     } else {
       $('#execResult').textContent = '✗ ' + res.error + '\n' + (res.trace || '');
-      setStatus('执行失败');
+      setStatus(t('msg.exec.fail'));
     }
   } catch (e) {
-    setStatus('请求失败: ' + e.message);
+    setStatus(t('msg.exec.requestFail') + ' ' + e.message);
   }
   setTimeout(refresh, 500);
 }
@@ -570,7 +570,7 @@ $('#btnRun').onclick = () => {
 $('#btnClear').onclick = () => { state.steps = []; renderSteps(); };
 $('#btnExport').onclick = () => {
   navigator.clipboard.writeText($('#codePreview').value || generateFullCode());
-  setStatus('代码已复制到剪贴板');
+  setStatus(t('msg.clipboard'));
 };
 
 function escapeHtml(s) {
@@ -607,3 +607,8 @@ function escapeAttr(s) {
 })();
 
 refresh();
+
+/* ===== 语言切换时重新渲染动态内容 ===== */
+document.addEventListener('langchange', function () {
+  renderSteps();
+});
