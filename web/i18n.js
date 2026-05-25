@@ -247,11 +247,18 @@
 
     trigger.addEventListener('click', function (e) {
       e.stopPropagation();
-      var isOpen = menu.classList.contains('open');
-      closeAll();
-      if (!isOpen) {
-        menu.classList.add('open');
+      var wasOpen = wrapper.classList.contains('open');
+      /* 先关闭所有其他下拉框 */
+      document.querySelectorAll('.dropdown.open').forEach(function (el) {
+        if (el !== wrapper) el.classList.remove('open');
+      });
+      /* toggle 自身 */
+      if (wasOpen) {
+        wrapper.classList.remove('open');
+        menu.classList.remove('open');
+      } else {
         wrapper.classList.add('open');
+        menu.classList.add('open');
       }
     });
 

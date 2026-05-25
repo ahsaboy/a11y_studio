@@ -227,7 +227,7 @@ h1, h2 { margin: 0; font-weight: 600; }
   transition: transform 0.2s ease;
 }
 .dropdown.open .dropdown-trigger {
-  border-color: var(--c-refresh);
+  border-color: var(--line-strong);
 }
 .dropdown.open .dropdown-trigger .dropdown-chevron {
   transform: rotate(180deg);
