@@ -386,6 +386,11 @@
     wrapper.appendChild(trigger);
     wrapper.appendChild(menu);
 
+    /* 点击菜单任意地方不触发外部关闭 */
+    menu.addEventListener('click', function (e) {
+      e.stopPropagation();
+    });
+
     /* 公开方法 */
     wrapper.setValue = function (v) {
       selected = v;
@@ -409,6 +414,9 @@
   function closeAll() {
     document.querySelectorAll('.dropdown.open').forEach(function (el) {
       el.classList.remove('open');
+      el.querySelector('.dropdown-menu').classList.remove('open');
+      var trigger = el.querySelector('.dropdown-trigger');
+      if (trigger) trigger.setAttribute('aria-expanded', 'false');
     });
   }
 
