@@ -75,22 +75,6 @@
   --t-fast: 120ms;
   --t-med:  200ms;
   --ease:   cubic-bezier(.4, 0, .2, 1);
-
-  /* === Semantic accents (Style ①: OLED Deep) === */
-  --c-sem-exec-ok:   #22C55E;
-  --c-sem-exec-err:  #EF4444;
-  --c-sem-code:      #818CF8;
-  --c-sem-props:     #60A5FA;
-  --c-sem-actions:   #F59E0B;
-  --c-sem-steps:     #A78BFA;
-  --c-sem-exec:      #34D399;
-
-  /* Panel micro-differentiation backgrounds */
-  --panel-actions-bg: linear-gradient(180deg, rgba(245, 158, 11, .04), rgba(15, 23, 42, .6) 60%);
-  --panel-form-bg:    linear-gradient(180deg, rgba(99, 102, 241, .04), rgba(15, 23, 42, .6) 60%);
-  --panel-steps-bg:   linear-gradient(180deg, rgba(167, 139, 250, .04), rgba(15, 23, 42, .6) 60%);
-  --panel-code-bg:    linear-gradient(180deg, rgba(129, 140, 248, .05), rgba(15, 23, 42, .7) 60%);
-  --panel-exec-bg:    linear-gradient(180deg, rgba(52, 211, 153, .04), rgba(15, 23, 42, .6) 60%);
 }
 
 /* ---------- Reset ---------- */
@@ -251,12 +235,12 @@ h1, h2 { margin: 0; font-weight: 600; }
   transform: rotate(180deg);
 }
 
-/* 下拉菜单 */
+/* 下拉菜单:打开时由 JS portal 到 <body> 并用 position:fixed 定位,
+   left/top/width/max-height 全部由 createDropdown 的 positionMenu() 写内联样式,
+   故此处不设 left/right/top/bottom —— 以此彻底避开 inspector 滚动容器(overflow)
+   与 .topbar 的 backdrop-filter 造成的裁剪 / 定位错位。 */
 .dropdown-menu {
-  position: absolute;
-  left: 0;
-  right: 0;
-  min-width: 100%;
+  position: fixed;
   max-height: 220px;
   overflow-y: auto;
   background: var(--bg-elev-2);
@@ -267,26 +251,13 @@ h1, h2 { margin: 0; font-weight: 600; }
   padding: 4px;
   opacity: 0;
   visibility: hidden;
-  z-index: calc(var(--z-toolbar) + 10);
+  z-index: 1100; /* 盖过 .hover-tooltip(1000) 等所有浮层 */
   transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
 }
-/* 默认下弹 */
-.dropdown.menu-down .dropdown-menu {
-  top: calc(100% + 4px);
-  transform: translateY(-4px);
-}
-.dropdown.menu-down .dropdown-menu.open {
-  transform: translateY(0);
-}
-/* 上弹模式 */
-.dropdown.menu-up .dropdown-menu {
-  bottom: calc(100% + 4px);
-  top: auto;
-  transform: translateY(4px);
-}
-.dropdown.menu-up .dropdown-menu.open {
-  transform: translateY(0);
-}
+/* 方向 class 由 JS 加在菜单自身(portal 后菜单已不是 .dropdown 的后代),
+   仅用于入场位移动画;真实位置由内联 top 决定。 */
+.dropdown-menu.menu-down { transform: translateY(-4px); }
+.dropdown-menu.menu-up   { transform: translateY(4px); }
 .dropdown-menu.open {
   opacity: 1;
   visibility: visible;
@@ -470,8 +441,8 @@ button:not(.btn):not(.secondary):not(.icon-btn):hover { background: var(--c-refr
     radial-gradient(circle at 50% 0%, rgba(59, 130, 246, .06), transparent 70%),
     var(--bg-canvas);
   background-image:
-    linear-gradient(rgba(255, 255, 255, .015) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, .015) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, .025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, .025) 1px, transparent 1px);
   background-size: 24px 24px, 24px 24px;
   display: flex;
   justify-content: center;
@@ -566,6 +537,7 @@ button:not(.btn):not(.secondary):not(.icon-btn):hover { background: var(--c-refr
   background: #000;
   cursor: crosshair;
   max-width: 100%;
+  /* 关键：canvas 自身尺寸由 JS 按 scale 设置，这里不再限制 */
   height: auto;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
@@ -646,22 +618,23 @@ button:not(.btn):not(.secondary):not(.icon-btn):hover { background: var(--c-refr
   flex-direction: column;
   min-width: 0;
   min-height: 0;
+  /* 不要 overflow: hidden —— 否则 resizer 突出到 inspector 外的部分会被裁掉 */
 }
 
 /* 拖动条 —— 跨 inspector 左边缘的细长热区 */
 .resizer {
   position: absolute;
   left: 0; top: 0; bottom: 0;
-  width: 14px;
-  margin-left: -7px;
-  z-index: 50;
+  width: 14px;            /* 命中区加宽到 14px */
+  margin-left: -7px;      /* 居中跨越左边线 */
+  z-index: 50;            /* 高于 panel-head 的所有 static 内容 */
   cursor: col-resize;
   background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background var(--t-fast) var(--ease);
-  touch-action: none;
+  touch-action: none;     /* 触摸时禁止页面滚动，确保拖动事件流不被打断 */
 }
 .resizer:hover,
 .resizer:focus-visible,
@@ -676,7 +649,7 @@ button:not(.btn):not(.secondary):not(.icon-btn):hover { background: var(--c-refr
   border-radius: 2px;
   transition: background var(--t-fast) var(--ease),
               height var(--t-fast) var(--ease);
-  pointer-events: none;
+  pointer-events: none;   /* grip 是装饰，事件让父 resizer 接 */
 }
 .resizer:hover .resizer-grip,
 .resizer:focus-visible .resizer-grip,
@@ -736,6 +709,7 @@ button:not(.btn):not(.secondary):not(.icon-btn):hover { background: var(--c-refr
 .inspector.two-col .left-col {
   grid-area: left;
   height: 100%;
+
   min-width: 0;
   border-right: 1px solid var(--line);
 }
@@ -806,27 +780,6 @@ button:not(.btn):not(.secondary):not(.icon-btn):hover { background: var(--c-refr
 .badge-mono { font-family: var(--font-mono); }
 
 .panel-body { padding: var(--sp-3) var(--sp-4) var(--sp-4); }
-
-/* === Per-panel accent backgrounds (Style ①) === */
-#actionsPanel .panel-head { background: linear-gradient(180deg, rgba(245, 158, 11, .12), rgba(22, 33, 58, .92)); }
-#actionsPanel .panel-head > svg.ic { color: var(--c-sem-actions); }
-#actionsPanel .panel-body { background: var(--panel-actions-bg); }
-
-#formPanel .panel-head { background: linear-gradient(180deg, rgba(99, 102, 241, .12), rgba(22, 33, 58, .92)); }
-#formPanel .panel-head > svg.ic { color: var(--c-sem-code); }
-#formPanel .panel-body { background: var(--panel-form-bg); }
-
-#stepsPanel .panel-head { background: linear-gradient(180deg, rgba(167, 139, 250, .12), rgba(22, 33, 58, .92)); }
-#stepsPanel .panel-head > svg.ic { color: var(--c-sem-steps); }
-#stepsPanel .panel-body { background: var(--panel-steps-bg); }
-
-#codePanel .panel-head { background: linear-gradient(180deg, rgba(129, 140, 248, .14), rgba(22, 33, 58, .92)); }
-#codePanel .panel-head > svg.ic { color: var(--c-sem-code); }
-#codePanel { background: var(--panel-code-bg); }
-
-#execPanel .panel-head { background: linear-gradient(180deg, rgba(52, 211, 153, .12), rgba(22, 33, 58, .92)); }
-#execPanel .panel-head > svg.ic { color: var(--c-sem-exec); }
-#execPanel { background: var(--panel-exec-bg); }
 
 .sub-label {
   margin: var(--sp-3) 0 6px;
@@ -910,16 +863,13 @@ button:not(.btn):not(.secondary):not(.icon-btn):hover { background: var(--c-refr
   white-space: nowrap;
   transition: background var(--t-fast) var(--ease),
               border-color var(--t-fast) var(--ease),
-              color var(--t-fast) var(--ease),
-              transform var(--t-fast) var(--ease);
+              color var(--t-fast) var(--ease);
 }
 .fnChip:hover {
   background: var(--c-chip-bg-hov);
   border-color: var(--c-link);
   color: var(--fg);
-  transform: translateY(-1px);
 }
-.fnChip:active { transform: translateY(0); }
 .fnChip.recommended {
   background: var(--c-chip-rec-bg);
   border-color: var(--c-chip-rec);
@@ -1082,12 +1032,7 @@ button:not(.btn):not(.secondary):not(.icon-btn):hover { background: var(--c-refr
   padding: 8px var(--sp-4);
   border-bottom: 1px dashed var(--line-dashed);
   counter-increment: step;
-  transition: background var(--t-fast) var(--ease);
 }
-.steps-list li:hover {
-  background: rgba(167, 139, 250, .06);
-}
-.steps-list li:last-child { border-bottom: 0; }
 .steps-list li::before {
   content: counter(step);
   display: inline-grid; place-items: center;
@@ -1095,17 +1040,9 @@ button:not(.btn):not(.secondary):not(.icon-btn):hover { background: var(--c-refr
   background: var(--bg-elev-3);
   border: 1px solid var(--line-strong);
   border-radius: 999px;
-  color: var(--c-sem-steps);
+  color: var(--c-link);
   font-size: 11px;
   font-weight: 600;
-  transition: background var(--t-fast) var(--ease),
-              border-color var(--t-fast) var(--ease),
-              box-shadow var(--t-fast) var(--ease);
-}
-.steps-list li:hover::before {
-  background: rgba(167, 139, 250, .18);
-  border-color: var(--c-sem-steps);
-  box-shadow: 0 0 8px rgba(167, 139, 250, .15);
 }
 .steps-list .code {
   color: var(--code-fg);
@@ -1121,26 +1058,11 @@ button:not(.btn):not(.secondary):not(.icon-btn):hover { background: var(--c-refr
   border-radius: 999px !important;
   font-size: 13px !important;
   line-height: 1;
-  opacity: 0;
-  transition: opacity var(--t-fast) var(--ease),
-              background var(--t-fast) var(--ease),
-              border-color var(--t-fast) var(--ease),
-              color var(--t-fast) var(--ease);
 }
-.steps-list li:hover .del { opacity: 1; }
 .steps-list .del:hover {
   background: rgba(239, 68, 68, .14) !important;
   border-color: var(--c-danger) !important;
   color: var(--c-danger) !important;
-}
-
-/* --- Step add animation --- */
-@keyframes stepIn {
-  from { opacity: 0; transform: translateX(-8px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-.steps-list li {
-  animation: stepIn var(--t-med) var(--ease);
 }
 
 /* ---------- Code Editor (textarea, editable) ---------- */
@@ -1148,13 +1070,13 @@ button:not(.btn):not(.secondary):not(.icon-btn):hover { background: var(--c-refr
   display: block;
   width: 100%;
   margin: 0;
-  padding: var(--sp-3) var(--sp-4) var(--sp-3) 44px;
+  padding: var(--sp-3) var(--sp-4);
   font-family: var(--font-mono);
   font-size: 12.5px;
   line-height: 1.65;
   color: var(--code-string);
   background:
-    linear-gradient(180deg, rgba(129, 140, 248, .04), transparent 30%),
+    linear-gradient(180deg, rgba(34, 197, 94, .03), transparent 30%),
     var(--bg-base);
   border: 0;
   border-top: 1px solid var(--line);
@@ -1171,16 +1093,16 @@ button:not(.btn):not(.secondary):not(.icon-btn):hover { background: var(--c-refr
 }
 .code-editor:focus {
   background:
-    linear-gradient(180deg, rgba(129, 140, 248, .07), transparent 30%),
+    linear-gradient(180deg, rgba(34, 197, 94, .05), transparent 30%),
     var(--bg-base);
-  box-shadow: inset 0 0 0 1px rgba(129, 140, 248, .25);
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, .25);
 }
 
 /* ---------- Exec result ---------- */
 #execResult {
   display: block;
   margin: 0;
-  padding: var(--sp-3) var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
   font-family: var(--font-mono);
   font-size: 11.5px;
   line-height: 1.55;
@@ -1188,25 +1110,12 @@ button:not(.btn):not(.secondary):not(.icon-btn):hover { background: var(--c-refr
   background: var(--bg-elev-1);
   white-space: pre-wrap;
   word-break: break-word;
-  border-left: 3px solid transparent;
-  transition: border-color var(--t-med) var(--ease),
-              background var(--t-med) var(--ease);
+  /* max-height/overflow 已经在 inspector-panels 规则里设置 */
 }
 #execResult:empty::after {
   content: var(--i18n-exec-empty, "未执行");
   color: var(--fg-faint);
   font-style: italic;
-}
-/* Execution result state classes (set by app.js) */
-#execResult.ok {
-  border-left-color: var(--c-sem-exec-ok);
-  background: rgba(34, 197, 94, .06);
-  color: #BBF7D0;
-}
-#execResult.err {
-  border-left-color: var(--c-sem-exec-err);
-  background: rgba(239, 68, 68, .06);
-  color: #FECACA;
 }
 
 /* ---------- Responsive ---------- */
@@ -1216,7 +1125,7 @@ button:not(.btn):not(.secondary):not(.icon-btn):hover { background: var(--c-refr
 @media (max-width: 900px) {
   body { overflow: auto; height: auto; }
   .workspace {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr;  /* 窄屏单列，优先级由源顺序保证 */
     grid-template-rows: minmax(60vh, auto) auto;
     overflow: visible;
   }
@@ -1226,7 +1135,7 @@ button:not(.btn):not(.secondary):not(.icon-btn):hover { background: var(--c-refr
     overflow: visible;
   }
   .inspector-scroll { overflow: visible; }
-  .resizer { display: none; }
+  .resizer { display: none; }   /* 窄屏隐藏拖动条 */
   .topbar { grid-template-columns: auto 1fr; gap: var(--sp-3); position: sticky; top: 0; }
   .toolbar {
     grid-column: 1 / -1;

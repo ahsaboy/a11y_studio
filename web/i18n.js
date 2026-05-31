@@ -195,7 +195,6 @@
     var selected = current;
     var highlightedIndex = -1;
     var isOpen = false;
-    var menuPlacement = 'down';
 
     /* 触发按钮 */
     var trigger = document.createElement('button');
@@ -263,13 +262,13 @@
         item.addEventListener('click', function (e) {
           e.stopPropagation();
           if (opt.disabled) return;
-          if (opt.value !== selected) {
+          var changed = opt.value !== selected;
+          if (changed) {
             selected = opt.value;
-            highlightedIndex = -1;
             render();
-            if (onChange) onChange(selected);
           }
-          closeAll();
+          closeMenu();
+          if (changed && onChange) onChange(selected);
         });
         item.addEventListener('mouseenter', function () {
           setHighlighted(index);
@@ -278,22 +277,68 @@
       });
     }
 
-    function updateMenuPlacement() {
+    /* 计算并应用菜单位置：菜单已 portal 到 body 并用 position:fixed，
+       直接用 trigger 的视口坐标定位，彻底避开任何 overflow 容器裁剪。 */
+    function positionMenu() {
       if (!isOpen) return;
-      var triggerRect = trigger.getBoundingClientRect();
-      var menuHeight = menu.offsetHeight;
-      var spaceBelow = window.innerHeight - triggerRect.bottom - 4;
-      var spaceAbove = triggerRect.top - 4;
-      if (spaceBelow < menuHeight && spaceAbove > menuHeight) {
-        menuPlacement = 'up';
-        wrapper.classList.add('menu-up');
-        wrapper.classList.remove('menu-down');
-      } else {
-        menuPlacement = 'down';
-        wrapper.classList.remove('menu-up');
-        wrapper.classList.add('menu-down');
-      }
+      var gap = 4;
+      var r = trigger.getBoundingClientRect();
+      var spaceBelow = window.innerHeight - r.bottom - gap;
+      var spaceAbove = r.top - gap;
+      var natural = menu.scrollHeight;              /* 内容自然高度,不受 max-height 截断影响 */
+      var up = spaceBelow < Math.min(natural, 220) && spaceAbove > spaceBelow;
+      var avail = up ? spaceAbove : spaceBelow;
+      var maxH = Math.max(120, Math.min(220, avail)); /* 按可用空间夹住,菜单永不溢出视口 */
+      menu.style.maxHeight = maxH + 'px';
+      var h = Math.min(natural, maxH);
+      menu.style.left = Math.round(r.left) + 'px';
+      menu.style.width = Math.round(r.width) + 'px';
+      menu.style.top = Math.round(up ? (r.top - gap - h) : (r.bottom + gap)) + 'px';
+      menu.classList.toggle('menu-up', up);
+      menu.classList.toggle('menu-down', !up);
     }
+
+    function openMenu() {
+      if (isOpen) return;
+      /* 关闭其它已展开的下拉 */
+      document.querySelectorAll('.dropdown.open').forEach(function (el) {
+        if (el !== wrapper && el._closeMenu) el._closeMenu();
+      });
+      document.body.appendChild(menu);             /* portal:移出滚动容器,挂到 body */
+      wrapper.classList.add('open');
+      menu.classList.add('open');
+      trigger.setAttribute('aria-expanded', 'true');
+      isOpen = true;
+      positionMenu();                              /* 同步定位,消除"先可见后跳位"的闪烁 */
+      /* 高亮当前选中项(若无则首个可选项) */
+      var selectedIdx = -1;
+      for (var i = 0; i < opts.length; i++) {
+        if (opts[i].value === selected) { selectedIdx = i; break; }
+      }
+      if (selectedIdx >= 0) {
+        setHighlighted(selectedIdx);
+      } else {
+        var firstSelectableIdx = getSelectableIndex(-1, 1);
+        if (firstSelectableIdx >= 0) setHighlighted(firstSelectableIdx);
+      }
+      window.addEventListener('scroll', positionMenu, true); /* capture:跟随任意滚动容器 */
+      window.addEventListener('resize', positionMenu);
+    }
+
+    function closeMenu() {
+      if (!isOpen) return;
+      isOpen = false;
+      highlightedIndex = -1;
+      wrapper.classList.remove('open');
+      menu.classList.remove('open');
+      trigger.setAttribute('aria-expanded', 'false');
+      window.removeEventListener('scroll', positionMenu, true);
+      window.removeEventListener('resize', positionMenu);
+      /* 菜单移回 wrapper(隐藏态的家):wrapper 被 innerHTML 清空销毁时菜单一并回收,
+         避免 portal 到 body 后残留与监听器泄漏。 */
+      if (menu.parentNode !== wrapper) wrapper.appendChild(menu);
+    }
+    wrapper._closeMenu = closeMenu;
 
     function render() {
       trigger.innerHTML = '<span class="dropdown-label">' + escapeHtml(findLabel(selected)) + '</span>'
@@ -303,43 +348,15 @@
 
     trigger.addEventListener('click', function (e) {
       e.stopPropagation();
-      var wasOpen = wrapper.classList.contains('open');
-      document.querySelectorAll('.dropdown.open').forEach(function (el) {
-        if (el !== wrapper) el.classList.remove('open');
-      });
-      if (wasOpen) {
-        wrapper.classList.remove('open');
-        menu.classList.remove('open');
-        trigger.setAttribute('aria-expanded', 'false');
-        isOpen = false;
-        highlightedIndex = -1;
-      } else {
-        wrapper.classList.add('open');
-        menu.classList.add('open');
-        trigger.setAttribute('aria-expanded', 'true');
-        isOpen = true;
-        var selectedIdx = -1;
-        for (var i = 0; i < opts.length; i++) {
-          if (opts[i].value === selected) {
-            selectedIdx = i;
-            break;
-          }
-        }
-        if (selectedIdx >= 0) {
-          setHighlighted(selectedIdx);
-        } else {
-          var firstSelectableIdx = getSelectableIndex(-1, 1);
-          if (firstSelectableIdx >= 0) setHighlighted(firstSelectableIdx);
-        }
-        setTimeout(updateMenuPlacement, 0);
-      }
+      if (isOpen) closeMenu();
+      else openMenu();
     });
 
     trigger.addEventListener('keydown', function (e) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         if (!isOpen) {
-          trigger.click();
+          openMenu();
         } else {
           var nextIdx = getSelectableIndex(highlightedIndex, 1);
           if (nextIdx >= 0) setHighlighted(nextIdx);
@@ -347,7 +364,7 @@
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         if (!isOpen) {
-          trigger.click();
+          openMenu();
         } else {
           var prevIdx = getSelectableIndex(highlightedIndex, -1);
           if (prevIdx >= 0) setHighlighted(prevIdx);
@@ -355,19 +372,20 @@
       } else if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         if (!isOpen) {
-          trigger.click();
+          openMenu();
         } else if (highlightedIndex >= 0 && !opts[highlightedIndex].disabled) {
           var opt = opts[highlightedIndex];
-          if (opt.value !== selected) {
+          var changed = opt.value !== selected;
+          if (changed) {
             selected = opt.value;
             render();
-            if (onChange) onChange(selected);
           }
-          closeAll();
+          closeMenu();
+          if (changed && onChange) onChange(selected);
         }
       } else if (e.key === 'Escape') {
         e.preventDefault();
-        if (isOpen) closeAll();
+        if (isOpen) closeMenu();
       } else if (e.key === 'Home') {
         e.preventDefault();
         if (isOpen) {
@@ -403,6 +421,7 @@
         selected = opts[0].value;
       }
       render();
+      if (isOpen) positionMenu();
       if (onChange) onChange(selected);
     };
 
@@ -413,10 +432,7 @@
   /* 关闭所有下拉菜单 */
   function closeAll() {
     document.querySelectorAll('.dropdown.open').forEach(function (el) {
-      el.classList.remove('open');
-      el.querySelector('.dropdown-menu').classList.remove('open');
-      var trigger = el.querySelector('.dropdown-trigger');
-      if (trigger) trigger.setAttribute('aria-expanded', 'false');
+      if (el._closeMenu) el._closeMenu();
     });
   }
 
