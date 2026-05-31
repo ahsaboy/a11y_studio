@@ -306,6 +306,7 @@ h1, h2 { margin: 0; font-weight: 600; }
 .lang-dropdown { width: auto; }
 .lang-dropdown .dropdown-trigger {
   width: auto;
+  min-width: 100px; /* 固定下限:切换"中文"/"English"时宽度不跳变;菜单宽度跟随 trigger,一并统一 */
   padding: 5px 10px;
   gap: 5px;
   background: transparent;
