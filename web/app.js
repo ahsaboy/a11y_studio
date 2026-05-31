@@ -82,9 +82,6 @@ window.addEventListener('resize', fitCanvas);
 
 /* ===== 2. 重绘 canvas ===== */
 function redraw() {
-  /* state.hasScreenshot=false(用户勾选了跳过截图)时不画背景图;
-     imgEl 未加载/加载失败时 drawImage 会抛 InvalidStateError,
-     此处降级为清空画布,后续节点框仍按 state.nodes 绘制 */
   if (state.hasScreenshot && imgEl.complete && imgEl.naturalWidth > 0) {
     ctx.drawImage(imgEl, 0, 0);
   } else {
@@ -109,9 +106,7 @@ function redraw() {
   }
 }
 
-/* ===== 3. canvas hover:动态高亮鼠标下的节点(前端自给) =====
-   - 命中节点按"面积升序"排,index=0 是最具体的(最小)节点
-   - Ctrl/Cmd + 滚轮切层级,绕过全屏遮罩等大组件 */
+/* ===== 3. canvas hover ===== */
 function getHitsAt(x, y) {
   const hits = state.nodes.filter(n =>
     x >= n.left && x < n.right && y >= n.top && y < n.bottom
@@ -182,7 +177,7 @@ function updateHoverTooltip(clientX, clientY) {
   hoverTipEl.innerHTML = rowsHtml + meta;
   hoverTipEl.hidden = false;
 
-  /* 定位:默认鼠标右上方,贴边自动避让(顶/右不够时翻到下方或左侧) */
+  /* 定位 */
   const margin = 14;
   const tw = hoverTipEl.offsetWidth;
   const th = hoverTipEl.offsetHeight;
@@ -218,7 +213,6 @@ canvas.addEventListener('mouseleave', () => {
 });
 
 canvas.addEventListener('wheel', (ev) => {
-  /* 候选只有 0 或 1 个时,不拦截滚轮,让页面正常滚动 */
   if (state.hoverCandidates.length <= 1) return;
   ev.preventDefault();
   const last = state.hoverCandidates.length - 1;
@@ -238,7 +232,6 @@ canvas.addEventListener('click', async (ev) => {
   const x = Math.round((ev.clientX - rect.left) / state.scale);
   const y = Math.round((ev.clientY - rect.top) / state.scale);
 
-  /* 优先用 hover 锁定的 path:支持深度过滤,绕过全屏遮罩 */
   const usePath = state.hoverPath != null;
   const body = usePath ? { path: state.hoverPath } : { x, y };
   setStatus(usePath ? `inspect ${state.hoverPath}...` : `inspect (${x}, ${y})...`);
@@ -316,7 +309,6 @@ function renderActions(recommended, allFns, globals) {
 function findFnMeta(name, allFns) {
   const fn = allFns.find(f => f.name === name);
   if (fn) return fn;
-  /* 兼容旧格式：如果找不到新的格式，创建一个兼容对象 */
   return {
     name,
     overloads: [{ params: [], returnType: 'void' }],
@@ -325,11 +317,6 @@ function findFnMeta(name, allFns) {
 }
 
 /* ===== 6. 参数表单 ===== */
-/* 根据参数名/类型 + 当前节点属性，推断输入框的预填值
-   - key/value：按 viewId > text > desc > class 优先级映射
-   - x/y/endX/endY 等：填节点中心点
-   - text/id/className：直填节点对应字段
-   - 数值/布尔：合理默认 */
 function paramDefault(p, node) {
   const tp = p.type;
   const nm = p.name;
@@ -376,7 +363,6 @@ function renderForm(fnName, meta, selectedOverloadIndex = 0) {
   const formBody = $('#formBody');
   formBody.innerHTML = '';
 
-  /* 函数签名 */
   const overloads = meta.overloads || [];
   const currentOverload = overloads[selectedOverloadIndex] || { params: [], returnType: 'void' };
 
@@ -384,7 +370,6 @@ function renderForm(fnName, meta, selectedOverloadIndex = 0) {
   sig.innerHTML = `<b>${fnName}</b> <span class="hint">→ ${currentOverload.returnType || 'void'}</span>`;
   formBody.appendChild(sig);
 
-  /* 重载选择器 */
   if (overloads.length > 1) {
     const lbl = document.createElement('label');
     lbl.textContent = t('form.overload.label');
@@ -401,7 +386,6 @@ function renderForm(fnName, meta, selectedOverloadIndex = 0) {
     formBody.appendChild(olDd);
   }
 
-  /* 定位方式选择器 */
   const needsSelector = hasNode && currentOverload.params.some(p =>
     p.type === 'AccessibilityNodeInfo' || p.type === 'NodeInfo'
   );
@@ -424,7 +408,6 @@ function renderForm(fnName, meta, selectedOverloadIndex = 0) {
     formBody.appendChild(selDd);
   }
 
-  /* 参数字段 */
   const extraParams = (currentOverload.params || []).filter(p => {
     if (['AccessibilityNodeInfo','NodeInfo','ArrayList','List','HashMap','Map','Object'].includes(p.type)) return false;
     if (p.type.endsWith('[]')) return false;
@@ -458,7 +441,6 @@ function renderForm(fnName, meta, selectedOverloadIndex = 0) {
     }
   });
 
-  /* 按钮行 */
   const btnRow = document.createElement('div');
   btnRow.className = 'btnRow';
   const btnAdd = document.createElement('button');
@@ -486,7 +468,6 @@ function buildCallCode(fnName, meta, selectedOverloadIndex = 0) {
     p.type === 'AccessibilityNodeInfo' || p.type === 'NodeInfo'
   );
 
-  /* 定位方式：从自定义下拉组件读取 */
   if (needsSelector) {
     const selDd = $('#selectorMode');
     if (selDd && selDd._kvList) {
@@ -503,7 +484,6 @@ function buildCallCode(fnName, meta, selectedOverloadIndex = 0) {
     }
   }
 
-  /* 其他参数：从自定义下拉组件或 input 读取 */
   document.querySelectorAll('#formBody .dropdown[data-pname]').forEach(el => {
     const pt = el.dataset.ptype;
     const raw = el.getValue();
@@ -554,7 +534,9 @@ window.generateFullCode = generateFullCode;
 /* ===== 9. 执行代码 ===== */
 async function executeCode(code) {
   setStatus(t('msg.executing'));
-  $('#execResult').textContent = '';
+  const resultEl = $('#execResult');
+  resultEl.textContent = '';
+  resultEl.className = '';
   try {
     const res = await fetch('/execute', {
       method: 'POST',
@@ -562,15 +544,19 @@ async function executeCode(code) {
       body: JSON.stringify({ code })
     }).then(r => r.json());
     if (res.ok) {
-      $('#execResult').textContent =
+      resultEl.className = 'ok';
+      resultEl.textContent =
         '✓ result=' + res.result +
         (res.stdout ? '\nstdout: ' + res.stdout : '');
       setStatus(t('msg.exec.done'));
     } else {
-      $('#execResult').textContent = '✗ ' + res.error + '\n' + (res.trace || '');
+      resultEl.className = 'err';
+      resultEl.textContent = '✗ ' + res.error + '\n' + (res.trace || '');
       setStatus(t('msg.exec.fail'));
     }
   } catch (e) {
+    resultEl.className = 'err';
+    resultEl.textContent = '✗ ' + e.message;
     setStatus(t('msg.exec.requestFail') + ' ' + e.message);
   }
   setTimeout(refresh, 500);
@@ -589,10 +575,10 @@ $('#btnExport').onclick = () => {
 };
 
 function escapeHtml(s) {
-  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  return s.replace(/[&<>"']/g, c => ({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[c]));
 }
 function escapeAttr(s) {
-  return s.replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+  return s.replace(/'/g, '&#39;').replace(/"/g, '"');
 }
 
 /* ===== checkbox: 跳过截图(localStorage 记忆) ===== */
