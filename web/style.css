@@ -985,6 +985,9 @@ button:not(.btn):not(.secondary):not(.icon-btn):hover { background: var(--c-refr
   box-shadow: 0 0 0 3px rgba(59, 130, 246, .18);
   outline: none;
 }
+/* 参数面板里的自定义下拉与 input 对齐:铺满整列宽,而非收缩到文字宽度。
+   (lang-dropdown 在 .topbar 下,不被此选择器命中,仍保持紧凑) */
+#formBody .dropdown { display: flex; width: 100%; }
 .btnRow {
   margin-top: var(--sp-4);
   display: flex; gap: var(--sp-2);
